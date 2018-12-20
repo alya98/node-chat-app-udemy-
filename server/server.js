@@ -21,18 +21,19 @@ io.on('connection', (socket) => {
 
   socket.on('join', (params, cb) => {
     console.log('params', params)
-    if(!isRealString(params.name) || !isRealString(params.room)) {
+    const roomName = params.room.toLowerCase();
+    if(!isRealString(params.name) || !isRealString(roomName)) {
       return cb('name and room name are required')
     };
 
-    socket.join(params.room);
+    socket.join(roomName);
     users.removeUser(socket.id);
-    users.addUser(socket.id, params.name, params.room);
+    users.addUser(socket.id, params.name, roomName);
 
-    io.to(params.room).emit('updateUserList', users.getUserList(params.room))
+    io.to(roomName).emit('updateUserList', users.getUserList(roomName))
 
     socket.emit('newMessage', generateMessage('admin','welcome to the chat'));
-    socket.broadcast.to(params.room).emit('newMessage', generateMessage('admin',`${params.name} joined`));
+    socket.broadcast.to(roomName).emit('newMessage', generateMessage('admin',`${params.name} joined`));
     cb();
   })
 
