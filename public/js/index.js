@@ -1,5 +1,21 @@
 const socket = io();
 
+function scrollToBottom() {
+  const messages = jQuery('#messages');
+  const newMessage = messages.children('li:last-child')
+
+  const clientHeight = messages.prop('clientHeight');
+  const scrollTop = messages.prop('scrollTop');
+  const scrollHeight = messages.prop('scrollHeight');
+  const newMessageHeight = newMessage.innerHeight();
+  const lastMessageHeight = newMessage.prev().innerHeight();
+
+  if(clientHeight+scrollTop+newMessageHeight+lastMessageHeight>=scrollHeight){
+    messages.scrollTop(scrollHeight)
+    console.log(clientHeight,scrollTop,newMessageHeight,lastMessageHeight)
+  }
+}
+
 socket.on('connect', function() {
   console.log('connected to server')
 });
@@ -18,7 +34,8 @@ const html = Mustache.render(template, {
   createdAt: formatedTime
 });
 
-jQuery('#chat__messages').append(html)
+jQuery('#messages').append(html)
+scrollToBottom();
 });
 
 jQuery('#message-form').on('submit', function(e) {
@@ -43,7 +60,8 @@ socket.on('newLocationMessage', function(message) {
     createdAt: formatedTime
   });
 
-  jQuery('#chat__messages').append(html)
+  jQuery('#messages').append(html);
+  scrollToBottom();
 })
 
 const locationButton = jQuery('#send-location');
