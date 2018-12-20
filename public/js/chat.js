@@ -12,42 +12,61 @@ function scrollToBottom() {
 
   if(clientHeight+scrollTop+newMessageHeight+lastMessageHeight>=scrollHeight){
     messages.scrollTop(scrollHeight)
-    console.log(clientHeight,scrollTop,newMessageHeight,lastMessageHeight)
   }
 }
 
 socket.on('connect', function() {
   console.log('connected to server')
+  const params = jQuery.deparam(window.location.search);
+  console.log(params)
+  socket.emit('join', params, function(error) {
+    if (error) {
+      alert(error)
+      window.location.href = '/'
+    } else {
+      console.log('no error')
+    }
+  })
 });
 
 socket.on('disconnect', function() {
   console.log('disconnected from server')
 });
 
+socket.on('updateUserList', function(users) {
+  console.log('User list: ', users)
+  const ol = jQuery('<ol></ol>');
+
+  users.forEach(user => {
+    ol.append(jQuery('<li></li>').text(user))
+  });
+  jQuery('#users').html(ol);
+})
+
 socket.on('newMessage', function(message) {
-const formatedTime = moment(message.createdAt).format('h:mm a')
-const template = jQuery('#message-template').html();
+  const formatedTime = moment(message.createdAt).format('h:mm a')
+  const template = jQuery('#message-template').html();
 
-const html = Mustache.render(template, {
-  text: message.text,
-  from: message.from,
-  createdAt: formatedTime
-});
+  const html = Mustache.render(template, {
+    text: message.text,
+    from: message.from,
+    createdAt: formatedTime
+  });
 
-jQuery('#messages').append(html)
-scrollToBottom();
+  jQuery('#messages').append(html)
+  scrollToBottom();
 });
 
 jQuery('#message-form').on('submit', function(e) {
-e.preventDefault();
-const messageTextBox = jQuery('[name=message]');
+  e.preventDefault();
+  const messageTextBox = jQuery('[name=message]');
 
-socket.emit('createMessage', {
-  from: 'alina',
-  text: jQuery(messageTextBox).val()
-}, function(data) {
-  jQuery(messageTextBox).val('')
-})
+  socket.emit('createMessage', {
+    from: jQuery.deparam(window.location.search).from,
+    text: jQuery(messageTextBox).val()
+  }, function(data) {
+    jQuery(messageTextBox).val('')
+  })
 })
 
 socket.on('newLocationMessage', function(message) {
@@ -65,6 +84,7 @@ socket.on('newLocationMessage', function(message) {
 })
 
 const locationButton = jQuery('#send-location');
+
 locationButton.on('click', function(e) {
   if (!navigator.geolocation) {
     return alert('geolocation does not supported by your browser')
